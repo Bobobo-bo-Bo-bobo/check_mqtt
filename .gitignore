@@ -1,0 +1,7 @@
+tmp/*
+*.swp
+check_mqtt.h
+*.a
+*.so
+*.o
+
