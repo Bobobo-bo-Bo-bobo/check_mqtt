@@ -1,0 +1,25 @@
+#ifndef __CHECK_MQTT_CONFIG_H__
+#define __CHECK_MQTT_CONFIG_H__
+
+#define CHECK_MQTT_VERSION "@CHECK_MQTT_VERSION@"
+#define DEFAULT_TIMEOUT 15
+#define DEFAULT_PORT 1883
+#define DEFAULT_QOS 0
+#define DEFAULT_TOPIC "nagios/check_mqtt"
+#define DEFAULT_WARN_MS 250
+#define DEFAULT_CRITICAL_MS 500
+
+#cmakedefine HAVE_MEMSET
+
+#include <limits.h>
+
+#ifndef HOST_NAME_MAX
+// Single UNIX Specification v2 says "Host names are limited to 255 bytes"
+#define HOST_NAME_MAX 255
+
+#endif /* HOST_NAME_MAX */
+
+#include <mosquitto.h>
+
+#endif /* __CHECK_MQTT_CONFIG_H__ */
+
