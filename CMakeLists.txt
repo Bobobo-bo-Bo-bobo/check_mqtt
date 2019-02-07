@@ -4,9 +4,11 @@ set(CHECK_MQTT_VERSION "1.0.0")
 # set(CMAKE_BUILD_TYPE Debug)
 
 include (CheckFunctionExists)
+include (CheckIncludeFile)
 include (FindPkgConfig)
 
 check_function_exists(memset HAVE_MEMSET)
+check_include_file(stdbool.h HAVE_STDBOOL_H)
 
 # check for libmosquitto
 find_library(LIBMOSQUITTO mosquitto)

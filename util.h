@@ -2,6 +2,7 @@
 #define __CHECK_MQTT_UTIL_H__
 
 char *uuidgen(void);
+void free_configuration(struct configuration *);
 
 #ifndef HAVE_MEMSET
 

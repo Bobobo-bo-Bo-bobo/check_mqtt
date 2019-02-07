@@ -38,3 +38,39 @@ char *uuidgen(void) {
     return result;
 }
 
+void free_configuration(struct configuration *cfg) {
+    if (!cfg) {
+        return;
+    }
+
+    if (cfg->host) {
+        free(cfg->host);
+    }
+
+    if (cfg->cert) {
+        free(cfg->cert);
+    }
+
+    if (cfg->key) {
+        free(cfg->key);
+    }
+
+    if (cfg->ca) {
+        free(cfg->ca);
+    }
+
+    if (cfg->topic) {
+        free(cfg->topic);
+    }
+
+    if (cfg->user) {
+        free(cfg->user);
+    }
+
+    if (cfg->password) {
+        free(cfg->password);
+    }
+
+    memset((void *) cfg, 0, sizeof(struct configuration));
+}
+
