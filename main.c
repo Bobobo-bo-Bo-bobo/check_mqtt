@@ -18,6 +18,7 @@ const struct option long_opts[] = {
     { "cert", required_argument, NULL, 'c' },
     { "key", required_argument, NULL, 'k' },
     { "ca", required_argument, NULL, 'C' },
+    { "cadir", required_argument, NULL, 'D' },
     { "insecure", no_argument, NULL, 'i' },
     { "qos", required_argument, NULL, 'Q' },
     { "topic", required_argument, NULL, 'T' },
@@ -110,6 +111,14 @@ int main(int argc, char **argv) {
                           config->ca = strdup(optarg);
                           if (!config->ca) {
                               fprintf(stderr, "Unable to allocate %d bytes of memory for SSL CA certificate file\n", strlen(optarg) + 1);
+                              goto leave;
+                          }
+                          break;
+                      }
+            case 'D': {
+                          config->cadir = strdup(optarg);
+                          if (!config->cadir) {
+                              fprintf(stderr, "Unable to allocate %d bytes of memory for SSL CA certificate directory\n", strlen(optarg) + 1);
                               goto leave;
                           }
                           break;
