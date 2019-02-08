@@ -8,6 +8,13 @@ include (CheckIncludeFile)
 include (FindPkgConfig)
 
 check_function_exists(memset HAVE_MEMSET)
+check_function_exists(memcpy HAVE_MEMCPY)
+
+check_function_exists(clock_gettime HAVE_CLOCK_GETTIME)
+if (NOT HAVE_CLOCK_GETTIME)
+    message(FATAL_ERROR "clock_gettime call is required")
+endif(NOT HAVE_CLOCK_GETTIME)
+
 check_include_file(stdbool.h HAVE_STDBOOL_H)
 
 # check for libmosquitto
@@ -22,9 +29,9 @@ include_directories(SYSTEM ${LIBUUID_INCLUDE_DIRS})
 link_directories(${LIBUUID_LIBRARY_DIRS})
 
 add_library(handler handler.c)
-add_library(mqtt mqtt.c)
 add_library(usage usage.c)
 add_library(util util.c)
+add_library(mqtt_functions mqtt_functions.c)
 
 configure_file("${PROJECT_SOURCE_DIR}/check_mqtt.h.in" "${PROJECT_SOURCE_DIR}/check_mqtt.h")
 
@@ -32,7 +39,7 @@ add_executable(check_mqtt main.c)
 target_link_libraries(check_mqtt handler)
 target_link_libraries(check_mqtt usage)
 target_link_libraries(check_mqtt util)
-target_link_libraries(check_mqtt mqtt)
+target_link_libraries(check_mqtt mqtt_functions)
 target_link_libraries(check_mqtt "-lmosquitto")
 target_link_libraries(check_mqtt ${LIBUUID_LIBRARIES})
 target_link_libraries(check_mqtt ${CMAKE_THREAD_LIBS_INIT})

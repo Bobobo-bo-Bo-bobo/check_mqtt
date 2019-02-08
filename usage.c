@@ -14,7 +14,7 @@ void usage(void) {
             "Usage: check_mqtt --help --host=<host> -port=<port> --cert=<cert> \n"
             "   --key=<key> --ca=<ca> --insecure --qos=<qos> --topic=<topic> \n"
             "   --timeout=<sec> --ssl --user=<user> --password=<pass> --warn=<ms> \n"
-            "   --critical=<ms>\n"
+            "   --critical=<ms> --keepalive=<s>\n"
             "\n"
             "   --help              This text\n"
             "\n"
@@ -56,6 +56,9 @@ void usage(void) {
             "\n"
             "   --critical=<ms>     Critical if probe message arrives <ms> milliseconds or later\n"
             "                       Default: %u\n"
-            "\n", CHECK_MQTT_VERSION, DEFAULT_PORT, DEFAULT_QOS, DEFAULT_TOPIC, DEFAULT_TIMEOUT, DEFAULT_WARN_MS, DEFAULT_CRITICAL_MS);
+            "\n"
+            "   --keepalive=<s>     Send MQTT PING message after <s> if no messages are exchanged\n"
+            "                       Default: %d\n"
+            "\n", CHECK_MQTT_VERSION, DEFAULT_PORT, DEFAULT_QOS, DEFAULT_TOPIC, DEFAULT_TIMEOUT, DEFAULT_WARN_MS, DEFAULT_CRITICAL_MS, DEFAULT_KEEP_ALIVE);
 }
 

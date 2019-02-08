@@ -2,12 +2,16 @@
 #define __CHECK_MQTT_CONFIG_H__
 
 #define CHECK_MQTT_VERSION "@CHECK_MQTT_VERSION@"
+
 #define DEFAULT_TIMEOUT 15
 #define DEFAULT_PORT 1883
 #define DEFAULT_QOS 0
 #define DEFAULT_TOPIC "nagios/check_mqtt"
 #define DEFAULT_WARN_MS 250
 #define DEFAULT_CRITICAL_MS 500
+#define DEFAULT_KEEP_ALIVE 1
+
+#define MQTT_UID_PREFIX "check_mqtt-"
 
 #define NAGIOS_OK 0
 #define NAGIOS_WARN 1
@@ -35,6 +39,7 @@ typedef char bool;
 
 #include <getopt.h>
 #include <mosquitto.h>
+#include <time.h>
 
 struct configuration {
     char *host;
@@ -42,15 +47,23 @@ struct configuration {
     char *cert;
     char *key;
     char *ca;
-    int insecure;
+    char *cadir;
+    bool insecure;
     int qos;
     char *topic;
     unsigned int timeout;
-    int ssl;
+    bool ssl;
     char *user;
     char *password;
-    int warn;
-    int critical;
+    unsigned int warn;
+    unsigned int critical;
+    char *payload;
+    int mqtt_connect_result;
+    int mqtt_error;
+    bool payload_received;
+    int keep_alive;
+    struct timespec send_time;
+    struct timespec receive_time;
 };
 
 #endif /* __CHECK_MQTT_CONFIG_H__ */
