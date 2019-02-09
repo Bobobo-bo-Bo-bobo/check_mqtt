@@ -2,6 +2,7 @@
 #include "mqtt_functions.h"
 #include "util.h"
 
+#include <setjmp.h>
 #include <mosquitto.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,19 +13,31 @@ void mqtt_connect_callback(struct mosquitto *mosq, void *userdata, int result) {
 
     cfg->mqtt_connect_result = result;
     if (result) {
-        return;
+        longjmp(state, ERROR_MQTT_CONNECT_FAILED);
     }
+
+#ifdef DEBUG
+    printf("DEBUG: mqtt_connect_callback: result=%d\n", result);
+    printf("DEBUG: mqtt_connect_callback: subscribing to topic %s\n", cfg->topic);
+#endif
 
     cfg->mqtt_error = mosquitto_subscribe(mosq, NULL, cfg->topic, cfg->qos);
 
+#ifdef DEBUG
+    printf("DEBUG: mqtt_connect_callback: subscribe returned %d (%s)\n", cfg->mqtt_error, mosquitto_strerror(cfg->mqtt_error));
+#endif
+
     if (cfg->mqtt_error != MOSQ_ERR_SUCCESS) {
-        // XXX: How to handle errors ?
-        return;
+        longjmp(state, ERROR_MQTT_SUBSCRIBE_FAILED);
     }
 }
 
 void mqtt_disconnect_callback(struct mosquitto *mosq, void *userdata, int result) {
     struct configuration *cfg = (struct configuration *) userdata;
+
+#ifdef DEBUG
+    printf("DEBUG: mqtt_disconnect_callback: result=%d (%s)\n", result, mosquitto_strerror(result));
+#endif
 
     cfg->mqtt_error = result;
 }
@@ -32,11 +45,19 @@ void mqtt_disconnect_callback(struct mosquitto *mosq, void *userdata, int result
 void mqtt_subscribe_callback(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos) {
     struct configuration *cfg = (struct configuration *) userdata;
 
+#ifdef DEBUG
+    printf("DEBUG: mqtt_subscribe_callback: subscribed to topic\n");
+    printf("DEBUG: mqtt_subscribe_callback: Publishing payload %s\n", cfg->payload);
+#endif
+
     cfg->mqtt_error = mosquitto_publish(mosq, NULL, cfg->topic, (int) strlen(cfg->payload) + 1, (void *) cfg->payload, cfg->qos, false);
 
+#ifdef DEBUG
+    printf("DEBUG: mqtt_subscribe_callback: mosquitto_publish returned %d (%s)\m", cfg->mqtt_error, mosquitto_strerror(mqtt->cfg_error));
+#endif
+
     if (cfg->mqtt_error != MOSQ_ERR_SUCCESS) {
-        // XXX: How to handle errors ?
-        return;
+        longjmp(state, ERROR_MQTT_PUBLISH_FAILED);
     }
 
     clock_gettime(CLOCK_MONOTONIC, &cfg->send_time);
@@ -50,29 +71,44 @@ void mqtt_message_callback(struct mosquitto *mosq, void *userdata, const struct 
     //       callback finnishes
     response = (char *) malloc(msg->payloadlen + 1);
     if (!response) {
-        // XXX: Is there a better way to handle OOM condition here?
-        return;
+        longjmp(state, ERROR_OOM);
     }
     memset((void *) response, 0, msg->payloadlen + 1);
 
     memcpy((void *) response, msg->payload, msg->payloadlen);
 
+#ifdef DEBUG
+        printf("DEBUG: mqtt_message_callback: received message: %s\n", response);
+#endif
+
     if (!strcmp(cfg->payload, response)) {
         // this is our probe payload, measure receive time and exit MQTT loop
         clock_gettime(CLOCK_MONOTONIC, &cfg->receive_time);
 
+#ifdef DEBUG
+        printf("DEBUG: mqtt_message_callback: received response matches our probe\n");
+#endif
+
         free(response);
         cfg->payload_received = true;
 
+#ifdef DEBUG
+        printf("DEBUG: mqtt_message_callback: disconnecting\m");
+#endif
         mosquitto_disconnect(mosq);
         return;
     }
+
+#ifdef DEBUG
+    printf("DEBUG: mqtt_message_callback: received response is not the payload we sent earlier (%s != %s)\n", response, cfg->payload);
+#endif
+
+    free(response);
 
     // keep on listening until the timeout has been reached or we received our payload
 }
 
 int mqtt_connect(struct configuration *cfg) {
-    struct mosquitto *mqtt = NULL;
     char *mqttid;
     char *mqtt_uuid;
     size_t mqttid_len = strlen(MQTT_UID_PREFIX) + 36 + 1;
@@ -97,24 +133,35 @@ int mqtt_connect(struct configuration *cfg) {
     mosquitto_lib_init(); // always return MOSQ_ERR_SUCCESS
 
     // initialize MQTT structure, clean messages and subscriptions on disconnect
-    mqtt = mosquitto_new(mqttid, true, (void *) cfg);
-    if (!mqtt) {
+    cfg->mqtt_handle = mosquitto_new(mqttid, true, (void *) cfg);
+
+#ifdef DEBUG
+    printf("DEBUG: mqtt_connect: mosquitto_new returned new MQTT connection structure at 0x%0x\n", cfg->mqtt_handle);
+#endif
+
+    if (!cfg->mqtt_handle) {
         fprintf(stderr, "Unable to initialise MQTT structure\n");
         free(mqttid);
         return -1;
     }
 
     // we are not threaded
-    mosquitto_threaded_set(mqtt, false);
+    mosquitto_threaded_set(cfg->mqtt_handle, false);
 
     // configure basic SSL
     if (cfg->ssl) {
         if (cfg->insecure) {
-            cfg->mqtt_error = mosquitto_tls_opts_set(mqtt, SSL_VERIFY_NONE, NULL, NULL);
+            cfg->mqtt_error = mosquitto_tls_opts_set(cfg->mqtt_handle, SSL_VERIFY_NONE, NULL, NULL);
         } else {
-            cfg->mqtt_error = mosquitto_tls_opts_set(mqtt, SSL_VERIFY_PEER, NULL, NULL);
+            cfg->mqtt_error = mosquitto_tls_opts_set(cfg->mqtt_handle, SSL_VERIFY_PEER, NULL, NULL);
+        }
+        if (cfg->mqtt_error != MOSQ_ERR_SUCCESS) {
+            free(mqttid);
+            mosquitto_lib_cleanup();
+            return -1;
         }
 
+        cfg->mqtt_error = mosquitto_tls_set(cfg->mqtt_handle, cfg->ca, cfg->cadir, cfg->cert, cfg->key, NULL);
         if (cfg->mqtt_error != MOSQ_ERR_SUCCESS) {
             free(mqttid);
             mosquitto_lib_cleanup();
@@ -124,14 +171,34 @@ int mqtt_connect(struct configuration *cfg) {
 
     // XXX: There is a third option, "pre-shared key over TLS" - mosquitto_tls_psk_set
     if (cfg->user) {
-        cfg->mqtt_error = mosquitto_username_pw_set(mqtt, cfg->user, cfg->password);
+
+#ifdef DEBUG
+        printf("DEBUG: mqtt_connect: setting up username/password authentication\n");
+#endif
+
+        cfg->mqtt_error = mosquitto_username_pw_set(cfg->mqtt_handle, cfg->user, cfg->password);
+
+#ifdef DEBUG
+        printf("DEBUG: mqtt_connect: mosquitto_username_pw_set returned %d (%s)\n", cfg->mqtt_error, mosquitto_strerror(cfg->mqtt_error));
+#endif
+
         if (cfg->mqtt_error != MOSQ_ERR_SUCCESS) {
             free(mqttid);
             mosquitto_lib_cleanup();
             return -1;
         }
     } else if (cfg->cert) {
-        cfg->mqtt_error = mosquitto_tls_set(mqtt, cfg->ca, cfg->cadir, cfg->cert, cfg->key, NULL);
+
+#ifdef DEBUG
+        printf("DEBUG: mqtt_connect: setting up SSL certificate authentication\n");
+#endif
+
+        cfg->mqtt_error = mosquitto_tls_set(cfg->mqtt_handle, cfg->ca, cfg->cadir, cfg->cert, cfg->key, NULL);
+
+#ifdef DEBUG
+        printf("DEBUG: mqtt_connect: mosquitto_tls_set returned %d (%s)\n", cfg->mqtt_error, mosquitto_strerror(cfg->mqtt_error));
+#endif
+
         if (cfg->mqtt_error != MOSQ_ERR_SUCCESS) {
             free(mqttid);
             mosquitto_lib_cleanup();
@@ -139,20 +206,34 @@ int mqtt_connect(struct configuration *cfg) {
         }
     }
 
-    //set callback handlers
-    mosquitto_connect_callback_set(mqtt, mqtt_connect_callback);
-    mosquitto_disconnect_callback_set(mqtt, mqtt_disconnect_callback);
-    mosquitto_subscribe_callback_set(mqtt, mqtt_subscribe_callback);
-    mosquitto_message_callback_set(mqtt, mqtt_message_callback);
+#ifdef DEBUGG
+    printf("DEBUG: mqtt_connect: installing callback functions\n");
+#endif
 
-    cfg->mqtt_error = mosquitto_connect(mqtt, cfg->host, cfg->port, cfg->keep_alive);
+    //set callback handlers
+    mosquitto_connect_callback_set(cfg->mqtt_handle, mqtt_connect_callback);
+    mosquitto_disconnect_callback_set(cfg->mqtt_handle, mqtt_disconnect_callback);
+    mosquitto_subscribe_callback_set(cfg->mqtt_handle, mqtt_subscribe_callback);
+    mosquitto_message_callback_set(cfg->mqtt_handle, mqtt_message_callback);
+
+    cfg->mqtt_error = mosquitto_connect(cfg->mqtt_handle, cfg->host, cfg->port, cfg->keep_alive);
+
+#ifdef DEBUG
+        printf("DEBUG: mqtt_connect: mosquitto_connect returned %d (%s)\n", cfg->mqtt_error, mosquitto_strerror(cfg->mqtt_error));
+#endif
+
     if (cfg->mqtt_error != MOSQ_ERR_SUCCESS) {
         free(mqttid);
         mosquitto_lib_cleanup();
         return -1;
     }
 
-    cfg->mqtt_error = mosquitto_loop_forever(mqtt, cfg->timeout, 1);
+    cfg->mqtt_error = mosquitto_loop_forever(cfg->mqtt_handle, cfg->timeout, 1);
+
+#ifdef DEBUG
+        printf("DEBUG: mqtt_connect: mosquitto_loop_forever returned %d (%s)\n", cfg->mqtt_error, mosquitto_strerror(cfg->mqtt_error));
+#endif
+
     if (cfg->mqtt_error != MOSQ_ERR_SUCCESS) {
         free(mqttid);
         mosquitto_lib_cleanup();

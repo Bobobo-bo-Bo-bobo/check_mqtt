@@ -23,5 +23,11 @@ void *memcpy(void *, const void *, size_t);
 struct timespec get_delay(const struct timespec, const struct timespec);
 double timespec2double_ms(const struct timespec);
 
+#ifdef DEBUG
+void print_configuration(const struct configuration *);
+#endif
+
+int read_password_from_file(const char *, struct configuration *);
+
 #endif /* __CHECK_MQTT_UTIL_H__ */
 

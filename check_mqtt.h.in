@@ -1,6 +1,12 @@
 #ifndef __CHECK_MQTT_CONFIG_H__
 #define __CHECK_MQTT_CONFIG_H__
 
+#if DEBUG_BUILD == 1
+#define DEBUG
+#else
+#undef DEBUG
+#endif /* DEBUG_BUILD == 1 */
+
 #define CHECK_MQTT_VERSION "@CHECK_MQTT_VERSION@"
 
 #define DEFAULT_TIMEOUT 15
@@ -10,16 +16,31 @@
 #define DEFAULT_WARN_MS 250
 #define DEFAULT_CRITICAL_MS 500
 #define DEFAULT_KEEP_ALIVE 1
-
+#define DEFAULT_CADIR "/etc/ssl/certs"
 #define MQTT_UID_PREFIX "check_mqtt-"
 
 #define NAGIOS_OK 0
-#define NAGIOS_WARN 1
+#define NAGIOS_WARNING 1
 #define NAGIOS_CRITICAL 2
 #define NAGIOS_UNKNOWN 3
 
+#define ERROR_TIMEOUT 0x01
+#define ERROR_MQTT_CONNECT_FAILED 0x02
+#define ERROR_MQTT_SUBSCRIBE_FAILED 0x03
+#define ERROR_MQTT_PUBLISH_FAILED 0x04
+#define ERROR_OOM 0x05
+
 #cmakedefine HAVE_MEMSET
+#cmakedefine HAVE_MEMCPY
 #cmakedefine HAVE_STDBOOL_H
+#cmakedefine HAVE_SIGACTION
+#cmakedefine HAVE_CLOCK_GETTIME
+
+#ifndef HAVE_CLOCK_GETTIME
+#error "OS support for clock_gettime is mandatory"
+#endif
+
+#define READ_BUFFER_SIZE 1024
 
 #ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
@@ -64,7 +85,11 @@ struct configuration {
     int keep_alive;
     struct timespec send_time;
     struct timespec receive_time;
+    struct mosquitto *mqtt_handle;
 };
+
+#include <setjmp.h>
+static jmp_buf state;
 
 #endif /* __CHECK_MQTT_CONFIG_H__ */
 
