@@ -72,6 +72,9 @@ void usage(void) {
             "\n"
             "   -K <s>                  Send MQTT PING message after <s> if no messages are exchanged\n"
             "   --keapalive=<s>         Default: %d\n"
+            "\n"
+            "\n"
+            "Note: If SSL/TLS is used (--ssl) the CA certificate MUST be present in either <cadir> or <cafile>.\n"
             "\n", CHECK_MQTT_VERSION, DEFAULT_PORT, DEFAULT_CADIR, DEFAULT_QOS, DEFAULT_TOPIC, DEFAULT_TIMEOUT, DEFAULT_WARN_MS, DEFAULT_CRITICAL_MS, DEFAULT_KEEP_ALIVE);
 }
 
