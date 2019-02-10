@@ -115,7 +115,7 @@ int mqtt_connect(struct configuration *cfg) {
 
     mqttid = (char *) malloc(mqttid_len);
     if (!mqttid) {
-        fprintf(stderr, "Unable to allocate %d bytes of memory for MQTT ID\n", mqttid_len);
+        fprintf(stderr, "Unable to allocate %ld bytes of memory for MQTT ID\n", mqttid_len);
         return -1;
     }
     memset((void *) mqttid, 0, mqttid_len);

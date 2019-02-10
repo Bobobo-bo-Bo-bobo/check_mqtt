@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     exit_code = NAGIOS_UNKNOWN;
     config = (struct configuration *) malloc(sizeof(struct configuration));
     if (!config) {
-        fprintf(stderr, "Failed to allocate %d bytes of memory for configuration\n", sizeof(struct configuration));
+        fprintf(stderr, "Failed to allocate %ld bytes of memory for configuration\n", sizeof(struct configuration));
         exit(NAGIOS_UNKNOWN);
     }
     memset((void *)config, 0, sizeof(struct configuration));
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
                           }
                           config->host = strdup(optarg);
                           if (!config->host) {
-                              fprintf(stderr, "Unable to allocate %d bytes of memory for hostname\n", strlen(optarg) + 1);
+                              fprintf(stderr, "Unable to allocate %ld bytes of memory for hostname\n", strlen(optarg) + 1);
                               goto leave;
                           }
                           break;
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
                           }
 
                           if ((temp_long <= 0) || (temp_long > 65535)) {
-                              fprintf(stderr, "Invalid port %d\n", temp_long);
+                              fprintf(stderr, "Invalid port %ld\n", temp_long);
                               goto leave;
                           }
                           config->port = (unsigned int) temp_long;
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
                           }
                           config->cert = strdup(optarg);
                           if (!config->cert) {
-                              fprintf(stderr, "Unable to allocate %d bytes of memory for SSL certificate file\n", strlen(optarg) + 1);
+                              fprintf(stderr, "Unable to allocate %ld bytes of memory for SSL certificate file\n", strlen(optarg) + 1);
                               goto leave;
                           }
                           break;
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
                           }
                           config->key = strdup(optarg);
                           if (!config->key) {
-                              fprintf(stderr, "Unable to allocate %d bytes of memory for SSL private key file\n", strlen(optarg) + 1);
+                              fprintf(stderr, "Unable to allocate %ld bytes of memory for SSL private key file\n", strlen(optarg) + 1);
                               goto leave;
                           }
                           break;
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
                           }
                           config->ca = strdup(optarg);
                           if (!config->ca) {
-                              fprintf(stderr, "Unable to allocate %d bytes of memory for SSL CA certificate file\n", strlen(optarg) + 1);
+                              fprintf(stderr, "Unable to allocate %ld bytes of memory for SSL CA certificate file\n", strlen(optarg) + 1);
                               goto leave;
                           }
                           break;
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
                           }
                           config->cadir = strdup(optarg);
                           if (!config->cadir) {
-                              fprintf(stderr, "Unable to allocate %d bytes of memory for SSL CA certificate directory\n", strlen(optarg) + 1);
+                              fprintf(stderr, "Unable to allocate %ld bytes of memory for SSL CA certificate directory\n", strlen(optarg) + 1);
                               goto leave;
                           }
                           break;
@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
 
                           // only 0, 1 and 2 are valid QoS values
                           if ((temp_long < 0) || (temp_long > 2)) {
-                              fprintf(stderr, "Invalid QoS value %d (valid values are 0, 1 or 2)\n", temp_long);
+                              fprintf(stderr, "Invalid QoS value %ld (valid values are 0, 1 or 2)\n", temp_long);
                               goto leave;
                           }
                           config->qos = (int) temp_long;
@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
                           }
                           config->topic = strdup(optarg);
                           if (!config->topic) {
-                              fprintf(stderr, "Unable to allocate %d bytes of memory for MQTT topic\n", strlen(optarg) + 1);
+                              fprintf(stderr, "Unable to allocate %ld bytes of memory for MQTT topic\n", strlen(optarg) + 1);
                               goto leave;
                           }
                           break;
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
                               goto leave;
                           }
                           if (temp_long <= 0) {
-                              fprintf(stderr, "Invalid timeout %d (must be > 0)\n", temp_long);
+                              fprintf(stderr, "Invalid timeout %ld (must be > 0)\n", temp_long);
                               goto leave;
                           }
                           config->timeout = (unsigned int) temp_long;
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
                           }
                           config->user = strdup(optarg);
                           if (!config->user) {
-                              fprintf(stderr, "Unable to allocate %d bytes of memory for user name\n", strlen(optarg) + 1);
+                              fprintf(stderr, "Unable to allocate %ld bytes of memory for user name\n", strlen(optarg) + 1);
                               goto leave;
                           }
                           break;
@@ -211,7 +211,7 @@ int main(int argc, char **argv) {
                           }
                           config->password = strdup(optarg);
                           if (!config->password) {
-                              fprintf(stderr, "Unable to allocate %d bytes of memory for password\n", strlen(optarg) + 1);
+                              fprintf(stderr, "Unable to allocate %ld bytes of memory for password\n", strlen(optarg) + 1);
                               goto leave;
                           };
                           break;
@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
                               goto leave;
                           }
                           if (temp_long <= 0) {
-                              fprintf(stderr, "Invalid timeout value %d (must be > 0)\n", temp_long);
+                              fprintf(stderr, "Invalid timeout value %ld (must be > 0)\n", temp_long);
                               goto leave;
                           }
                           config->warn = (unsigned int) temp_long;
@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
                               goto leave;
                           }
                           if (temp_long <= 0) {
-                              fprintf(stderr, "Invalid timeout value %d (must be > 0)\n", temp_long);
+                              fprintf(stderr, "Invalid timeout value %ld (must be > 0)\n", temp_long);
                               goto leave;
                           }
                           config->critical = (unsigned int) temp_long;
@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
                           }
 
                           if (temp_long <= 0) {
-                              fprintf(stderr, "Invalid keep alive value %s (must be > 0)\n", temp_long);
+                              fprintf(stderr, "Invalid keep alive value %ld (must be > 0)\n", temp_long);
                               goto leave;
                           }
                           config->keep_alive = (int) temp_long;
@@ -281,14 +281,14 @@ int main(int argc, char **argv) {
     if (!config->topic) {
         config->topic = strdup(DEFAULT_TOPIC);
         if (!config->topic) {
-            fprintf(stderr, "Unable to allocate %d bytes of memory for MQTT topic\n", strlen(DEFAULT_TOPIC) + 1);
+            fprintf(stderr, "Unable to allocate %ld bytes of memory for MQTT topic\n", strlen(DEFAULT_TOPIC) + 1);
             goto leave;
         }
     }
     if (!config->cadir) {
         config->cadir = strdup(DEFAULT_CADIR);
         if (!config->cadir) {
-            fprintf(stderr, "Unable to allocate %d bytes of memory for CA directory\n", strlen(DEFAULT_CADIR) + 1);
+            fprintf(stderr, "Unable to allocate %ld bytes of memory for CA directory\n", strlen(DEFAULT_CADIR) + 1);
             goto leave;
         }
     }
@@ -392,7 +392,7 @@ int main(int argc, char **argv) {
                     break;
                 }
         case ERROR_TIMEOUT: {
-                                fprintf(stdout, "Timeout after %d seconds | mqtt_rtt=U;%d;%d;0\n", config->warn, config->critical);
+                                fprintf(stdout, "Timeout after %d seconds | mqtt_rtt=U;%d;%d;0\n", config->timeout, config->warn, config->critical);
                                 exit_code = NAGIOS_CRITICAL;
                                 break;
                             }
