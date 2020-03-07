@@ -1,3 +1,7 @@
+**_Note:_** Because I'm running my own servers for serveral years, main development is done at at https://git.ypbind.de/cgit/check_mqtt/
+
+----
+
 # Nagios check to check availability and time to send MQTT data
 ## Preface
 A Nagios check to check the availability of a MQTT broker and measures the
